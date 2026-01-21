@@ -1,0 +1,69 @@
+/* --- RESET BÁSICO --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* --- NAVEGACIÓN --- */
+.nav-header {
+    background: #fff;
+    border-bottom: 1px solid #ccc;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-list {
+    display: flex;
+    list-style: none;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.nav-list a {
+    text-decoration: none;
+    font-weight: bold;
+    color: #222;
+}
+
+/* --- SECCIÓN PRINCIPAL --- */
+#hero {
+    text-align: center;
+    padding: 2rem;
+    background: #f9f9f9;
+}
+
+#hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: .5rem;
+}
+
+#contenido-principal {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* --- PIE DE PÁGINA --- */
+footer {
+    text-align: center;
+    padding: 1rem;
+    background: #eee;
+    font-size: .9rem;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 800px) {
+    .nav-list {
+        flex-direction: column;
+    }
+}
