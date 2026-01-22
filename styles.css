@@ -69,6 +69,12 @@ h1, h2, h3 {
     margin: 0 auto;
 }
 
+.descripcion {
+    text-align: center;
+    max-width: 800px;
+    margin: 2rem auto;
+}
+
 .image-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
