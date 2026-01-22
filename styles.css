@@ -1,8 +1,7 @@
 
 @font-face {
     font-family: "CMU Sans Serif Demi Condensed";
-    src: url("fonts/CMUSansSerif-DemiCondensed.woff2") format("woff2"),
-         url("fonts/CMUSansSerif-DemiCondensed.woff") format("woff");
+    src: url("fonts/CMU Sans Serif Demi Condensed DemiCondensed.woff") format("woff");
     font-weight: 600;
     font-style: normal;
     font-display: swap;
