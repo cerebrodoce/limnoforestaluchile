@@ -143,11 +143,10 @@ h1, h2, h3 {
 /* =========================
    GALERÍA
 ========================= */
+
 .galeria {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 2rem;
-    justify-items: center;
+    display: flex;
+    justify-content: center;
     margin-top: 3rem;
 }
 
