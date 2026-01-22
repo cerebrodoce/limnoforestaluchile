@@ -1,4 +1,6 @@
-
+/* =========================
+   FUENTES
+========================= */
 @font-face {
     font-family: "CMU Sans Serif Demi Condensed";
     src: url("fonts/CMU_Sans_Serif_DemiCondensed.woff") format("woff");
@@ -7,28 +9,36 @@
     font-display: swap;
 }
 
-h1 {
-    font-family: "CMU Sans Serif Demi Condensed", Arial, sans-serif;
-}
-
-/* --- RESET BÁSICO --- */
+/* =========================
+   RESET BÁSICO
+========================= */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* =========================
+   BASE
+========================= */
 body {
     font-family: "CMU Sans Serif Demi Condensed", "Carlito", Arial, sans-serif;
+    color: #222;
+    line-height: 1.6;
+    background-color: #ffffff;
 }
 
-/* Títulos */
+/* =========================
+   TÍTULOS
+========================= */
 h1, h2, h3 {
     font-family: "CMU Sans Serif Demi Condensed", "Carlito", Arial, sans-serif;
+    font-weight: 600;
 }
 
-
-/* --- NAVEGACIÓN --- */
+/* =========================
+   NAVEGACIÓN
+========================= */
 .nav-header {
     background: #fff;
     border-bottom: 1px solid #ccc;
@@ -41,85 +51,23 @@ h1, h2, h3 {
     display: flex;
     list-style: none;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.5rem;
     padding: 1rem;
 }
 
 .nav-list a {
     text-decoration: none;
-    font-weight: bold;
+    font-weight: 600;
     color: #222;
 }
 
-/* --- SECCIÓN PRINCIPAL --- */
-#hero {
-    text-align: center;
-    padding: 2rem;
-    background: #f9f9f9;
-}
-
-#hero h1 {
-    font-size: 2.5rem;
-    margin-bottom: .5rem;
-}
-
-#contenido-principal {
-    padding: 2rem;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.descripcion p {
-    text-align: center; !important;
-    max-width: 800px;
-    margin: 2rem auto;
-}
-
-.galeria img {
-    max-width: 500px;
-    width: 100%;
-    margin: 1.5rem auto;
-}
-
-.img-grande {
-    max-width: 800px;
-    width: 100%;
-}
-
-.img-media {
-    max-width: 500px;
-    width: 100%;
-}
-
-.img-pequena {
-    max-width: 300px;
-    width: 100%;
-}
-
-img {
-    display: block;
-    margin: 2rem auto;
-}
-
-/* --- PIE DE PÁGINA --- */
-footer {
-    text-align: center;
-    padding: 1rem;
-    background: #eee;
-    font-size: .9rem;
-}
-
-/* --- RESPONSIVE --- */
-@media (max-width: 800px) {
-    .nav-list {
-        flex-direction: column;
-    }
+.nav-list a:hover {
+    text-decoration: underline;
 }
 
 /* =========================
-   PORTADA (HERO)
+   HERO / PORTADA
 ========================= */
-
 .hero {
     position: relative;
     width: 100%;
@@ -145,23 +93,108 @@ footer {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    color: white;
     text-align: center;
+    color: #ffffff;
     padding: 1rem;
 }
 
 .hero-overlay h1 {
     font-size: 3rem;
-    font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
 .hero-overlay p {
     font-size: 1.2rem;
-    margin-top: 0.5rem;
 }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
+/* =========================
+   HERO SIMPLE (SIN IMAGEN)
+========================= */
+#hero {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    background: #f9f9f9;
+}
+
+#hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* =========================
+   CONTENIDO PRINCIPAL
+========================= */
+#contenido-principal {
+    padding: 2rem 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* =========================
+   DESCRIPCIÓN (TEXTO CENTRADO REAL)
+========================= */
+.descripcion {
+    text-align: center;
+    max-width: 800px;
+    margin: 2.5rem auto;
+    line-height: 1.7;
+}
+
+/* =========================
+   GALERÍA
+========================= */
+.galeria {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* =========================
+   IMÁGENES
+========================= */
+.img-grande {
+    max-width: 800px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 2rem auto;
+}
+
+.img-media {
+    max-width: 500px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 2rem auto;
+}
+
+.img-pequena {
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 2rem auto;
+}
+
+/* =========================
+   PIE DE PÁGINA
+========================= */
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    background: #eee;
+    font-size: 0.9rem;
+    margin-top: 3rem;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 800px) {
+    .nav-list {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
     .hero {
         height: 40vh;
     }
@@ -174,4 +207,3 @@ footer {
         font-size: 1rem;
     }
 }
-
