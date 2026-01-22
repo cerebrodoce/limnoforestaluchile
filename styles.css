@@ -7,6 +7,10 @@
     font-display: swap;
 }
 
+h1 {
+    font-family: "CMU Sans Serif Demi Condensed", Arial, sans-serif;
+}
+
 /* --- RESET BÁSICO --- */
 * {
     margin: 0;
