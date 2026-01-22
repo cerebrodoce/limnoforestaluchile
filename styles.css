@@ -81,6 +81,26 @@ h1, h2, h3 {
     margin: 1.5rem auto;
 }
 
+.img-grande {
+    max-width: 800px;
+    width: 100%;
+}
+
+.img-media {
+    max-width: 500px;
+    width: 100%;
+}
+
+.img-pequena {
+    max-width: 300px;
+    width: 100%;
+}
+
+img {
+    display: block;
+    margin: 2rem auto;
+}
+
 /* --- PIE DE PÁGINA --- */
 footer {
     text-align: center;
