@@ -5,6 +5,17 @@
     box-sizing: border-box;
 }
 
+/* =========================
+   ESTILOS GLOBALES
+========================= */
+
+body {
+    font-family: "Carlito", Calibri, "Segoe UI", Arial, sans-serif;
+    line-height: 1.6;
+    color: #222;
+    background-color: #fff;
+}
+
 /* --- NAVEGACIÓN --- */
 .nav-header {
     background: #fff;
