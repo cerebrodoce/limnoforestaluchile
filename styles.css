@@ -151,10 +151,6 @@ h1, h2, h3 {
     margin-top: 3rem;
 }
 
-.galeria img {
-    max-width: 160px;
-    border-radius: 50%;
-}
 
 /* =========================
    IMÁGENES
@@ -176,7 +172,7 @@ h1, h2, h3 {
 }
 
 .img-pequena {
-    max-width: 100px;
+    max-width: 200px;
     width: 100%;
     height: auto;
     display: block;
