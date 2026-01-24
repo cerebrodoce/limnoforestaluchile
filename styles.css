@@ -130,6 +130,15 @@ h1, h2, h3 {
     margin: 0 auto;
 }
 
+.subtitulo {
+    text-align: left;
+    font-size: 1.4rem;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid #000;
+    padding-bottom: 0.3rem;
+    margin-bottom: 2rem;
+}
+
 /* =========================
    DESCRIPCIÓN (TEXTO CENTRADO REAL)
 ========================= */
