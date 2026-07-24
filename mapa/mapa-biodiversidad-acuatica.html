@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biodiversidad Acuática de Chile — Mapa de Registros</title>
+<!-- Favicon: como este archivo está dentro de la carpeta /mapa, subimos un nivel
+     con "../" para llegar al favicon.ico que ya está en la raíz del repo. -->
+<link rel="icon" type="image/x-icon" href="../favicon.ico">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<style>
+  :root{
+    --agua-profunda:#0f2f3d;
+    --agua-media:#1c4d5c;
+    --papel:#f1ede2;
+    --tinta:#1a1a17;
+    --acento-inat:#5a9c3f;
+    --acento-propio:#c46a2c;
+    --linea:#d8d2c0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;font-family:"Georgia","Times New Roman",serif;color:var(--tinta);background:var(--papel);}
+  #app{display:flex;height:100%;}
+
+  /* ---- Sidebar ---- */
+  #panel{
+    width:340px;min-width:340px;height:100%;overflow-y:auto;
+    background:var(--papel);border-right:1px solid var(--linea);
+    padding:18px 18px 40px 18px;
+  }
+  #panel .logo{
+    display:block;max-width:100%;height:auto;margin:0 0 12px 0;
+    border-radius:3px;
+  }
+  #panel h1{
+    font-size:1.15rem;line-height:1.3;margin:0 0 4px 0;letter-spacing:.2px;
+  }
+  #panel .subt{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;
+    color:var(--agua-media);text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px;
+  }
+  fieldset{
+    border:1px solid var(--linea);border-radius:2px;margin:0 0 16px 0;padding:10px 12px 12px 12px;
+  }
+  legend{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.68rem;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--agua-profunda);padding:0 4px;
+  }
+  label.chk{display:flex;align-items:center;gap:6px;font-size:.85rem;margin:4px 0;cursor:pointer;}
+  input[type=text],input[type=date]{
+    width:100%;padding:6px 7px;font-family:inherit;font-size:.85rem;
+    border:1px solid var(--linea);border-radius:2px;background:#fff;margin-top:3px;
+  }
+  .row2{display:flex;gap:8px;}
+  .row2 > div{flex:1;}
+  small.hint{display:block;color:#6b6b62;font-size:.72rem;margin-top:4px;line-height:1.3;}
+  button{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.75rem;
+    text-transform:uppercase;letter-spacing:.06em;
+    border:1px solid var(--agua-profunda);background:var(--agua-profunda);color:#fff;
+    padding:8px 10px;border-radius:2px;cursor:pointer;width:100%;margin-top:6px;
+  }
+  button:hover{background:var(--agua-media);}
+  button.secundario{background:transparent;color:var(--agua-profunda);}
+  button.secundario:hover{background:var(--agua-profunda);color:#fff;}
+  button.peligro{border-color:#8a2f22;color:#8a2f22;background:transparent;}
+  button.peligro:hover{background:#8a2f22;color:#fff;}
+  #estado{font-size:.75rem;color:var(--agua-media);min-height:1.2em;margin-top:6px;font-family:ui-monospace,monospace;}
+
+  #leyenda{font-size:.78rem;margin-top:4px;}
+  #leyenda .item{display:flex;align-items:center;gap:6px;margin:3px 0;}
+  #leyenda .dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;}
+
+  #listaPropios{max-height:170px;overflow-y:auto;font-size:.78rem;margin-top:6px;}
+  #listaPropios .item{display:flex;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px dashed var(--linea);}
+  #listaPropios .item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #listaPropios .item button{width:auto;margin:0;padding:2px 6px;font-size:.65rem;}
+
+  /* ---- Map ---- */
+  #mapa{flex:1;height:100%;}
+  .popup-inat img{width:100%;border-radius:2px;margin-bottom:4px;}
+  .popup-inat b{font-style:italic;}
+  .popup-inat a{color:var(--agua-media);}
+  .popup-propio textarea{width:100%;font-family:inherit;font-size:.82rem;}
+
+  .modo-agregar #mapa{cursor:crosshair;}
+  #avisoModo{
+    position:absolute;top:10px;left:360px;z-index:500;background:var(--acento-propio);
+    color:#fff;padding:6px 12px;border-radius:2px;font-size:.78rem;display:none;
+    font-family:ui-monospace,monospace;
+  }
+  .modo-agregar #avisoModo{display:block;}
+
+  @media (max-width:800px){
+    #app{flex-direction:column;}
+    #panel{width:100%;min-width:0;height:45%;order:2;}
+    #mapa{height:55%;order:1;}
+    #avisoModo{left:10px;top:auto;bottom:46%;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="panel">
+    <img class="logo" src="../img/diatomea.png" alt="Logo del proyecto">
+    <h1>Biodiversidad Acuática de Chile</h1>
+    <div class="subt">Registros grado investigación · iNaturalist + puntos propios</div>
+
+    <fieldset>
+      <legend>Filtro de taxón</legend>
+      <label style="font-size:.8rem;">Nombre científico o común
+        <input type="text" id="taxonNombre" placeholder="ej: Trichomycterus, Diatomea, Chironomidae">
+      </label>
+      <small class="hint">Deja vacío para no filtrar por nombre. Se puede escribir en español o latín; iNaturalist intenta hacer match.</small>
+
+      <div style="margin-top:8px;">
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="iconic" data-valor="Actinopterygii"> Peces</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="iconic" data-valor="Mollusca"> Moluscos</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="iconic" data-valor="Insecta"> Insectos (macroinvertebrados)</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="iconic" data-valor="Arachnida"> Arácnidos acuáticos</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="iconic" data-valor="Amphibia"> Anfibios</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="iconic" data-valor="Plantae"> Plantas acuáticas</label>
+      </div>
+      <small class="hint">
+        Estos grupos usan la categoría "iconic taxa" de iNaturalist, que en Chile son casi
+        exclusivamente dulceacuícolas o terrestres (el riesgo de arrastrar especies marinas es bajo).
+      </small>
+
+      <div style="margin-top:10px;">
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="taxon_name" data-valor="Bacillariophyceae"> Diatomeas (Bacillariophyceae)</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="taxon_name" data-valor="Chlorophyta"> Algas verdes (Chlorophyta)</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="taxon_name" data-valor="Charophyta"> Carofitas (Charophyta)</label>
+        <label class="chk"><input type="checkbox" class="grupo" data-tipo="taxon_name" data-valor="Cyanobacteria"> Cianobacterias</label>
+      </div>
+      <small class="hint">
+        <b>Importante:</b> antes estas algas se traían con la casilla genérica "Chromista", que en iNaturalist
+        también incluye grupos casi 100% marinos (algas pardas/kelp, diatomeas marinas, etc.), por eso aparecían
+        tantos registros costeros. Estas 4 casillas apuntan a grupos taxonómicos concretos y son mucho más
+        específicas para agua dulce, aunque ningún filtro de iNaturalist distingue "marino" de "dulceacuícola"
+        de forma perfecta — dentro de Chlorophyta y Cyanobacteria igual existen especies marinas/estuarinas.
+        Para máxima precisión, usa el campo de nombre de arriba con géneros puntuales que ya conoces
+        (ej. <i>Achnanthes</i>, <i>Cyclotella</i>, <i>Nostoc</i>).
+      </small>
+      <small class="hint">Sin marcar ninguna casilla se incluyen todos los grupos (no solo acuáticos), así que se recomienda marcar al menos uno.</small>
+    </fieldset>
+
+    <fieldset>
+      <legend>Filtros adicionales</legend>
+      <label class="chk"><input type="checkbox" id="soloFotos" checked> Solo observaciones con foto</label>
+      <div class="row2">
+        <div><label style="font-size:.78rem;">Desde<input type="date" id="fechaDesde"></label></div>
+        <div><label style="font-size:.78rem;">Hasta<input type="date" id="fechaHasta"></label></div>
+      </div>
+    </fieldset>
+
+    <button id="btnCargar">Cargar observaciones</button>
+    <button id="btnMas" class="secundario" style="display:none;">Cargar más resultados</button>
+    <button id="btnLimpiar" class="secundario">Limpiar mapa (iNaturalist)</button>
+    <div id="estado"></div>
+
+    <fieldset>
+      <legend>Verificar un registro específico</legend>
+      <label style="font-size:.8rem;">Pega la URL o el ID de la observación
+        <input type="text" id="idVerificar" placeholder="ej: https://www.inaturalist.org/observations/344032807">
+      </label>
+      <button id="btnVerificar" class="secundario">Buscar y diagnosticar</button>
+      <div id="resultadoVerificar" style="font-size:.78rem;margin-top:8px;line-height:1.5;"></div>
+      <small class="hint">Útil cuando un registro que sabes que es "research grade" en iNaturalist no aparece: revisa si es por geoprivacidad, por estar fuera del área del mapa, por no tener foto, o por los filtros marcados.</small>
+    </fieldset>
+
+    <fieldset>
+      <legend>Leyenda</legend>
+      <div id="leyenda">
+        <div class="item"><span class="dot" style="background:var(--acento-inat);"></span> Registro iNaturalist (grado investigación)</div>
+        <div class="item"><span class="dot" style="background:var(--acento-propio);"></span> Localización propia</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Localizaciones propias</legend>
+      <button id="btnModoAgregar" class="secundario">Activar modo "agregar punto"</button>
+      <small class="hint">Con el modo activo, haz clic en el mapa para crear un punto propio. Se guarda en este navegador (localStorage).</small>
+      <div id="listaPropios"></div>
+      <button id="btnExportar" class="secundario">Descargar puntos propios (GeoJSON)</button>
+      <button id="btnBorrarTodo" class="peligro">Borrar todos mis puntos</button>
+      <small class="hint">
+        Para que tus puntos se vean para <b>todas</b> las personas que visiten la página (no solo en tu navegador),
+        descarga el GeoJSON, guárdalo como <code>mis-localizaciones.geojson</code> en la raíz del repositorio y súbelo con git.
+        Al cargar, la página intenta leer ese archivo automáticamente.
+      </small>
+    </fieldset>
+  </aside>
+
+  <main id="mapa"></main>
+  <div id="avisoModo">Modo agregar punto activo — haz clic en el mapa</div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN GENERAL
+   ========================================================= */
+// Bounding box de Chile continental (ajusta si necesitas incluir
+// Isla de Pascua / Juan Fernández; se dejó fuera para no traer
+// demasiados resultados oceánicos).
+const BBOX_CHILE = { swlat: -56.0, swlng: -76.0, nelat: -17.4, nelng: -66.0 };
+
+const PER_PAGE = 200;      // máximo por página que acepta la API
+const MAX_PAGINAS = 8;     // tope de páginas a traer por consulta (=1600 registros máx.)
+
+const LS_KEY = 'puntos_propios_biodiversidad_chile';
+
+/* =========================================================
+   MAPA BASE
+   ========================================================= */
+const mapa = L.map('mapa', { zoomControl: true }).setView([-33.45, -70.9], 5);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+}).addTo(mapa);
+
+const clusterINat = L.markerClusterGroup();
+mapa.addLayer(clusterINat);
+
+const capaPropios = L.layerGroup().addTo(mapa);
+
+const iconoPropio = L.divIcon({
+  className: '',
+  html: '<div style="width:16px;height:16px;border-radius:50%;background:#c46a2c;border:2px solid #fff;box-shadow:0 0 2px rgba(0,0,0,.6);"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
+});
+
+/* =========================================================
+   CARGA DE OBSERVACIONES DESDE iNATURALIST
+   ========================================================= */
+// Cada "consulta" representa una petición independiente a la API:
+// - tipo 'iconic': combina todas las casillas de grupo iconográfico marcadas
+//   (Peces, Moluscos, Insectos, etc.) en una sola petición con iconic_taxa[]
+//   repetido (esos valores se combinan con OR en la API), más el filtro de
+//   nombre de texto libre si el usuario escribió algo.
+// - tipo 'taxon_name': una petición por cada casilla de alga/grupo específico
+//   marcada (Diatomeas, Chlorophyta, Charophyta, Cianobacterias), porque el
+//   parámetro taxon_name solo admite un valor por petición y no se puede
+//   combinar con OR dentro de una misma llamada.
+// Los resultados de todas las consultas activas se combinan en el mapa,
+// deduplicando por ID de observación.
+
+let consultasActuales = [];       // lista de objetos {id, iconic, taxonName}
+let estadoConsultas = {};         // { [id]: {pagina, hasMore, total} }
+let idsVistos = new Set();        // IDs de observación ya dibujados (evita duplicados)
+
+// CACHÉ Y RESOLUCIÓN DE NOMBRE -> ID DE TAXÓN
+// El parámetro taxon_name de la API de iNaturalist exige una coincidencia
+// EXACTA de nombre y falla en silencio (0 resultados) con nombres de rango
+// alto (clases, phylum) o con nombres ambiguos/homónimos. Por eso, en vez de
+// usar taxon_name directamente, resolvemos primero el nombre a un taxon_id
+// consultando /v1/taxa (búsqueda flexible, como el buscador de la web de
+// iNaturalist) y usamos ese ID, que sí filtra de forma confiable.
+const cacheTaxonId = {};
+
+async function resolverTaxonId(consulta) {
+  const clave = consulta.trim().toLowerCase();
+  if (clave in cacheTaxonId) return cacheTaxonId[clave];
+  try {
+    const resp = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(consulta)}&is_active=true&per_page=10`);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const candidatos = data.results || [];
+    let match = candidatos.find(t => t.name && t.name.toLowerCase() === clave);
+    if (!match) match = candidatos.find(t => t.preferred_common_name && t.preferred_common_name.toLowerCase() === clave);
+    if (!match) match = candidatos[0];
+    cacheTaxonId[clave] = match ? match.id : null;
+    return cacheTaxonId[clave];
+  } catch (e) {
+    console.error('Error resolviendo taxón', consulta, e);
+    cacheTaxonId[clave] = null;
+    return null;
+  }
+}
+
+function gruposIconicSeleccionados() {
+  return Array.from(document.querySelectorAll('.grupo[data-tipo="iconic"]:checked')).map(c => c.dataset.valor);
+}
+function gruposTaxonNameSeleccionados() {
+  return Array.from(document.querySelectorAll('.grupo[data-tipo="taxon_name"]:checked')).map(c => c.dataset.valor);
+}
+
+async function construirListaConsultas() {
+  const consultas = [];
+  const avisos = [];
+  const nombreTexto = document.getElementById('taxonNombre').value.trim();
+  const iconicos = gruposIconicSeleccionados();
+  const nombrados = gruposTaxonNameSeleccionados();
+
+  let taxonIdTexto = null;
+  if (nombreTexto) {
+    taxonIdTexto = await resolverTaxonId(nombreTexto);
+    if (!taxonIdTexto) avisos.push(`No se encontró en iNaturalist un taxón que coincida con "${nombreTexto}".`);
+  }
+
+  // La consulta "base" corre si hay grupos iconográficos marcados, o si hay
+  // texto en el campo de nombre, o si no se marcó ninguna casilla en absoluto
+  // (comportamiento por defecto: traer todo, con el aviso ya mostrado en la UI).
+  if (iconicos.length > 0 || nombreTexto || nombrados.length === 0) {
+    consultas.push({ id: 'base', iconic: iconicos, taxonId: taxonIdTexto });
+  }
+
+  for (const valor of nombrados) {
+    const id = await resolverTaxonId(valor);
+    if (!id) { avisos.push(`No se pudo resolver el taxón "${valor}" a un ID válido.`); continue; }
+    consultas.push({ id: 'taxon:' + valor, iconic: [], taxonId: id });
+  }
+  return { consultas, avisos };
+}
+
+function construirURL(consulta, pagina) {
+  const params = new URLSearchParams();
+  params.set('quality_grade', 'research');
+  params.set('swlat', BBOX_CHILE.swlat);
+  params.set('swlng', BBOX_CHILE.swlng);
+  params.set('nelat', BBOX_CHILE.nelat);
+  params.set('nelng', BBOX_CHILE.nelng);
+  params.set('per_page', PER_PAGE);
+  params.set('page', pagina);
+  params.set('order', 'desc');
+  params.set('order_by', 'created_at');
+
+  if (consulta.taxonId) params.set('taxon_id', consulta.taxonId);
+  consulta.iconic.forEach(t => params.append('iconic_taxa[]', t));
+
+  if (document.getElementById('soloFotos').checked) {
+    params.append('photos', 'true');
+  }
+
+  const desde = document.getElementById('fechaDesde').value;
+  const hasta = document.getElementById('fechaHasta').value;
+  if (desde) params.set('d1', desde);
+  if (hasta) params.set('d2', hasta);
+
+  return 'https://api.inaturalist.org/v1/observations?' + params.toString();
+}
+
+function ponerEstado(txt) {
+  document.getElementById('estado').textContent = txt;
+}
+
+function dibujarObservacion(obs) {
+  if (!obs.geojson || !obs.geojson.coordinates) return;
+  if (idsVistos.has(obs.id)) return; // ya se dibujó por otra consulta
+  idsVistos.add(obs.id);
+
+  const [lng, lat] = obs.geojson.coordinates;
+  const nombreComun = obs.taxon && obs.taxon.preferred_common_name ? obs.taxon.preferred_common_name : null;
+  const nombreCientifico = obs.taxon ? obs.taxon.name : 'Sin identificar';
+  const foto = obs.photos && obs.photos.length ? obs.photos[0].url.replace('square', 'medium') : null;
+  const fecha = obs.observed_on || 'fecha no registrada';
+  const observador = obs.user ? (obs.user.name || obs.user.login) : 'anónimo';
+
+  const html = `
+    <div class="popup-inat">
+      ${foto ? `<img src="${foto}" alt="${nombreCientifico}">` : ''}
+      <b>${nombreCientifico}</b>${nombreComun ? ' — ' + nombreComun : ''}<br>
+      Fecha: ${fecha}<br>
+      Observador: ${observador}<br>
+      <a href="${obs.uri}" target="_blank" rel="noopener">Ver en iNaturalist ↗</a>
+    </div>`;
+
+  L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: '',
+      html: '<div style="width:14px;height:14px;border-radius:50%;background:#5a9c3f;border:2px solid #fff;box-shadow:0 0 2px rgba(0,0,0,.6);"></div>',
+      iconSize: [14, 14], iconAnchor: [7, 7]
+    })
+  }).bindPopup(html).addTo(clusterINat);
+}
+
+async function cargarObservaciones(nuevaConsulta) {
+  let avisos = [];
+  if (nuevaConsulta) {
+    clusterINat.clearLayers();
+    idsVistos.clear();
+    ponerEstado('Resolviendo taxones seleccionados…');
+    const resultado = await construirListaConsultas();
+    consultasActuales = resultado.consultas;
+    avisos = resultado.avisos;
+    estadoConsultas = {};
+    consultasActuales.forEach(c => { estadoConsultas[c.id] = { pagina: 1, hasMore: true, total: 0 }; });
+  } else {
+    consultasActuales.forEach(c => {
+      if (estadoConsultas[c.id].hasMore) estadoConsultas[c.id].pagina += 1;
+    });
+  }
+
+  if (consultasActuales.length === 0) {
+    ponerEstado(avisos.length ? avisos.join(' ') : 'No hay ninguna consulta activa.');
+    return;
+  }
+
+  ponerEstado('Consultando iNaturalist (' + consultasActuales.length + ' grupo(s) activo(s))…');
+  document.getElementById('btnMas').style.display = 'none';
+
+  try {
+    await Promise.all(consultasActuales.map(async c => {
+      const st = estadoConsultas[c.id];
+      if (!st.hasMore) return;
+      const resp = await fetch(construirURL(c, st.pagina));
+      if (!resp.ok) throw new Error('HTTP ' + resp.status + ' en grupo ' + c.id);
+      const data = await resp.json();
+      (data.results || []).forEach(dibujarObservacion);
+      st.total = data.total_results;
+      st.hasMore = (st.pagina * PER_PAGE < st.total) && st.pagina < MAX_PAGINAS;
+    }));
+
+    const quedaMas = consultasActuales.some(c => estadoConsultas[c.id].hasMore);
+    const totalSumado = consultasActuales.reduce((acc, c) => acc + estadoConsultas[c.id].total, 0);
+    const resumen = `${idsVistos.size} registros únicos en el mapa (de ${totalSumado} coincidencias sumando todos los grupos, con posible solape).`;
+    ponerEstado(avisos.length ? avisos.join(' ') + ' — ' + resumen : resumen);
+    document.getElementById('btnMas').style.display = quedaMas ? 'block' : 'none';
+
+  } catch (err) {
+    ponerEstado('Error al consultar la API: ' + err.message);
+    console.error(err);
+  }
+}
+
+document.getElementById('btnCargar').addEventListener('click', () => cargarObservaciones(true));
+document.getElementById('btnMas').addEventListener('click', () => cargarObservaciones(false));
+document.getElementById('btnLimpiar').addEventListener('click', () => {
+  clusterINat.clearLayers();
+  idsVistos.clear();
+  consultasActuales = [];
+  estadoConsultas = {};
+  ponerEstado('Mapa de iNaturalist limpiado.');
+  document.getElementById('btnMas').style.display = 'none';
+});
+
+/* =========================================================
+   DIAGNÓSTICO DE UN REGISTRO ESPECÍFICO
+   ========================================================= */
+document.getElementById('btnVerificar').addEventListener('click', async () => {
+  const input = document.getElementById('idVerificar').value.trim();
+  const salida = document.getElementById('resultadoVerificar');
+  const match = input.match(/(\d+)\s*$/);
+  if (!match) {
+    salida.textContent = 'No se reconoce un ID numérico en lo que pegaste. Copia la URL completa de la observación o solo el número final.';
+    return;
+  }
+  const id = match[1];
+  salida.textContent = 'Consultando observación ' + id + '…';
+
+  try {
+    const resp = await fetch(`https://api.inaturalist.org/v1/observations/${id}`);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const obs = data.results && data.results[0];
+    if (!obs) { salida.textContent = 'No se encontró esa observación. Revisa el ID.'; return; }
+
+    const tieneCoord = !!(obs.geojson && obs.geojson.coordinates);
+    let lat, lng, dentroBbox = false;
+    if (tieneCoord) {
+      [lng, lat] = obs.geojson.coordinates;
+      dentroBbox = lat <= BBOX_CHILE.nelat && lat >= BBOX_CHILE.swlat && lng <= BBOX_CHILE.nelng && lng >= BBOX_CHILE.swlng;
+    }
+    const tieneFoto = obs.photos && obs.photos.length > 0;
+    const iconico = obs.taxon ? obs.taxon.iconic_taxon_name : null;
+
+    const diag = [];
+    diag.push('Taxón: <b>' + (obs.taxon ? obs.taxon.name : 'sin identificar') + '</b> (grupo iconográfico: ' + (iconico || 'ninguno') + ')');
+    diag.push('Grado de calidad en iNaturalist: <b>' + obs.quality_grade + '</b>');
+    diag.push('Geoprivacidad: ' + (obs.geoprivacy || 'abierta'));
+    diag.push('¿Coordenadas públicas disponibles?: ' + (tieneCoord ? 'sí' : '<b>NO</b> — la geoprivacidad oculta la ubicación pública'));
+    if (tieneCoord) diag.push('¿Dentro del área de Chile continental que consulta el mapa?: ' + (dentroBbox ? 'sí' : '<b>NO</b>'));
+    diag.push('¿Tiene foto?: ' + (tieneFoto ? 'sí' : 'no'));
+    diag.push('Fecha observada: ' + (obs.observed_on || 'no registrada'));
+
+    if (obs.quality_grade !== 'research') {
+      diag.push('⚠ No está en "research grade" en este momento — por eso el mapa, que solo pide quality_grade=research, no la trae.');
+    }
+    if (tieneCoord && !dentroBbox) {
+      diag.push('⚠ Está fuera del bounding box de Chile continental configurado en BBOX_CHILE.');
+    }
+    if (!tieneCoord) {
+      diag.push('⚠ No se puede ubicar en el mapa: la geoprivacidad de esta observación oculta la coordenada exacta al público.');
+    }
+    if (tieneFoto === false && document.getElementById('soloFotos').checked) {
+      diag.push('⚠ No tiene foto y actualmente tienes marcado "Solo observaciones con foto" — desmárcalo si quieres incluir registros sin foto (ej. solo con grabación de sonido).');
+    }
+
+    salida.innerHTML = diag.map(d => '• ' + d).join('<br>');
+
+    if (tieneCoord) {
+      const btn = document.createElement('button');
+      btn.className = 'secundario';
+      btn.style.marginTop = '8px';
+      btn.textContent = 'Agregar igual al mapa (ignora filtros)';
+      btn.addEventListener('click', () => {
+        dibujarObservacion(obs);
+        mapa.setView([lat, lng], 13);
+      });
+      salida.appendChild(document.createElement('br'));
+      salida.appendChild(btn);
+    }
+  } catch (err) {
+    salida.textContent = 'Error al consultar la API: ' + err.message;
+  }
+});
+
+/* =========================================================
+   PUNTOS PROPIOS (localStorage + import/export GeoJSON)
+   ========================================================= */
+function leerPropios() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+  catch { return []; }
+}
+function guardarPropios(lista) {
+  localStorage.setItem(LS_KEY, JSON.stringify(lista));
+}
+
+function dibujarPropios() {
+  capaPropios.clearLayers();
+  const lista = leerPropios();
+  const contenedor = document.getElementById('listaPropios');
+  contenedor.innerHTML = '';
+
+  lista.forEach((p, idx) => {
+    const marker = L.marker([p.lat, p.lng], { icon: iconoPropio, draggable: true });
+    marker.bindPopup(`
+      <div class="popup-propio">
+        <b>${p.nombre || 'Sin nombre'}</b><br>
+        <small>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</small><br>
+        ${p.notas ? '<p>' + p.notas + '</p>' : ''}
+      </div>`);
+    marker.on('dragend', e => {
+      const { lat, lng } = e.target.getLatLng();
+      const arr = leerPropios();
+      arr[idx].lat = lat; arr[idx].lng = lng;
+      guardarPropios(arr);
+    });
+    marker.addTo(capaPropios);
+
+    const fila = document.createElement('div');
+    fila.className = 'item';
+    fila.innerHTML = `<span title="${p.nombre}">${p.nombre || 'Sin nombre'}</span>`;
+    const btnDel = document.createElement('button');
+    btnDel.className = 'peligro';
+    btnDel.textContent = '✕';
+    btnDel.addEventListener('click', () => {
+      const arr = leerPropios();
+      arr.splice(idx, 1);
+      guardarPropios(arr);
+      dibujarPropios();
+    });
+    fila.appendChild(btnDel);
+    contenedor.appendChild(fila);
+  });
+}
+
+let modoAgregar = false;
+document.getElementById('btnModoAgregar').addEventListener('click', () => {
+  modoAgregar = !modoAgregar;
+  document.body.classList.toggle('modo-agregar', modoAgregar);
+  document.getElementById('btnModoAgregar').textContent = modoAgregar
+    ? 'Desactivar modo "agregar punto"'
+    : 'Activar modo "agregar punto"';
+});
+
+mapa.on('click', e => {
+  if (!modoAgregar) return;
+  const nombre = prompt('Nombre o etiqueta del punto (ej. "Estero Nilahue - sitio 3"):', '');
+  if (nombre === null) return; // cancelado
+  const notas = prompt('Notas u observaciones (opcional):', '') || '';
+  const arr = leerPropios();
+  arr.push({ nombre, notas, lat: e.latlng.lat, lng: e.latlng.lng, creado: new Date().toISOString() });
+  guardarPropios(arr);
+  dibujarPropios();
+});
+
+document.getElementById('btnBorrarTodo').addEventListener('click', () => {
+  if (confirm('¿Borrar todos tus puntos propios guardados en este navegador? Esta acción no se puede deshacer.')) {
+    guardarPropios([]);
+    dibujarPropios();
+  }
+});
+
+document.getElementById('btnExportar').addEventListener('click', () => {
+  const lista = leerPropios();
+  const geojson = {
+    type: 'FeatureCollection',
+    features: lista.map(p => ({
+      type: 'Feature',
+      properties: { nombre: p.nombre, notas: p.notas, creado: p.creado },
+      geometry: { type: 'Point', coordinates: [p.lng, p.lat] }
+    }))
+  };
+  const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/geo+json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mis-localizaciones.geojson';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Intenta cargar un GeoJSON compartido ya versionado en el repositorio,
+// para que los puntos "propios" que decidas publicar se vean para
+// cualquier visitante, no solo en tu navegador.
+async function cargarGeojsonCompartido() {
+  try {
+    const resp = await fetch('mis-localizaciones.geojson', { cache: 'no-store' });
+    if (!resp.ok) return;
+    const gj = await resp.json();
+    (gj.features || []).forEach(f => {
+      const [lng, lat] = f.geometry.coordinates;
+      L.marker([lat, lng], { icon: iconoPropio })
+        .bindPopup(`<div class="popup-propio"><b>${f.properties.nombre || 'Sin nombre'}</b><br>${f.properties.notas || ''}</div>`)
+        .addTo(capaPropios);
+    });
+  } catch (e) {
+    // Si el archivo no existe todavía, no pasa nada.
+  }
+}
+
+dibujarPropios();
+cargarGeojsonCompartido();
+</script>
+</body>
+</html>
